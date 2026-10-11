@@ -1,0 +1,35 @@
+name: Build MacPlayer
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build release
+        run: swift build -c release
+
+      - name: Assemble .app bundle
+        run: |
+          APP=MacPlayer.app
+          mkdir -p "$APP/Contents/MacOS"
+          cp .build/release/MacPlayer "$APP/Contents/MacOS/MacPlayer"
+          cp packaging/Info.plist "$APP/Contents/Info.plist"
+          chmod +x "$APP/Contents/MacOS/MacPlayer"
+
+      - name: Package artifact
+        run: zip -r MacPlayer.zip MacPlayer.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacPlayer
+          path: MacPlayer.zip
